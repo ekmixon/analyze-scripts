@@ -9,14 +9,20 @@ api_key = 'YOUR API KEY'
 
 
 def main(file_path):
-    response = requests.post(base_url + '/get-access-token', json={'api_key': api_key})
+    response = requests.post(
+        f'{base_url}/get-access-token', json={'api_key': api_key}
+    )
+
     response.raise_for_status()
     session = requests.session()
-    session.headers['Authorization'] = session.headers['Authorization'] = 'Bearer %s' % response.json()['result']
+    session.headers['Authorization'] = session.headers[
+        'Authorization'
+    ] = f"Bearer {response.json()['result']}"
+
 
     with open(file_path, 'rb') as file_to_upload:
         files = {'file': ('file_name', file_to_upload)}
-        response = session.post(base_url + '/analyze', files=files)
+        response = session.post(f'{base_url}/analyze', files=files)
         assert response.status_code == 201
 
     while response.status_code != 200:

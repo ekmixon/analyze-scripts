@@ -9,13 +9,19 @@ api_key = 'YOUR API KEY'
 
 
 def main(hash_value):
-    response = requests.post(base_url + '/get-access-token', json={'api_key': api_key})
+    response = requests.post(
+        f'{base_url}/get-access-token', json={'api_key': api_key}
+    )
+
     response.raise_for_status()
     session = requests.session()
-    session.headers['Authorization'] = session.headers['Authorization'] = 'Bearer %s' % response.json()['result']
+    session.headers['Authorization'] = session.headers[
+        'Authorization'
+    ] = f"Bearer {response.json()['result']}"
+
 
     data = {'hash': hash_value}
-    response = session.post(base_url + '/analyze-by-hash', json=data)
+    response = session.post(f'{base_url}/analyze-by-hash', json=data)
     if response.status_code == 404:
         print('File not found')
         return

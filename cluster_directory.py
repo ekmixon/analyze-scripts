@@ -10,10 +10,16 @@ API_KEY = 'YOUR API KEY'
 
 
 def get_session():
-    response = requests.post(BASE_URL + '/get-access-token', json={'api_key': API_KEY})
+    response = requests.post(
+        f'{BASE_URL}/get-access-token', json={'api_key': API_KEY}
+    )
+
     response.raise_for_status()
     session = requests.session()
-    session.headers['Authorization'] = session.headers['Authorization'] = 'Bearer %s' % response.json()['result']
+    session.headers['Authorization'] = session.headers[
+        'Authorization'
+    ] = f"Bearer {response.json()['result']}"
+
     return session
 
 
@@ -21,8 +27,8 @@ def send_to_analysis(file_path, session):
     result_url = ''
     with open(file_path, 'rb') as file_to_upload:
         files = {'file': (os.path.basename(file_path), file_to_upload)}
-        response = session.post(BASE_URL + '/analyze', files=files)
-        if response.status_code == 201 or response.status_code == 200:
+        response = session.post(f'{BASE_URL}/analyze', files=files)
+        if response.status_code in [201, 200]:
             result_url = response.json()['result_url']
         else:
             print('Analyzing of file named {0} failed with code: {1} message: {2} '.format(file_path,
@@ -37,8 +43,7 @@ def analyze_directory(dir_path, session):
     for path in os.listdir(dir_path):
         file_path = os.path.join(dir_path, path)
         if os.path.isfile(file_path):
-            result_url = send_to_analysis(file_path, session)
-            if result_url:
+            if result_url := send_to_analysis(file_path, session):
                 result_urls.append((result_url, os.path.basename(path)))
 
     while result_urls:
@@ -57,7 +62,11 @@ def analyze_directory(dir_path, session):
 
 def send_to_related_samples(analysis_id, session):
     result_url = ''
-    response = session.post(BASE_URL + '/analyses/{}/sub-analyses/root/get-account-related-samples'.format(analysis_id))
+    response = session.post(
+        BASE_URL
+        + f'/analyses/{analysis_id}/sub-analyses/root/get-account-related-samples'
+    )
+
     if response.status_code != 201:
         print('Get related sampled for analysis ID: {0} failed with status code {1}'.format(analysis_id, response.status_code))
     else:
@@ -69,8 +78,7 @@ def get_related_samples(results, session):
     result_urls = []
     previous_samples = {}
     for sha256, analysis_id, file_name in results:
-        result_url = send_to_related_samples(analysis_id, session)
-        if result_url:
+        if result_url := send_to_related_samples(analysis_id, session):
             result_urls.append((sha256, result_url))
 
     while result_urls:
